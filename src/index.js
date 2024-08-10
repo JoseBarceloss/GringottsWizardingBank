@@ -26,7 +26,7 @@ function operation() {
         } else if (action === 'Consultar Saldo') {
             getAccountBalance()
         } else if (action === 'Sacar') {
-
+            witdraw()
         } else if (action === 'Sair') {
             console.log(chalk.bgBlue.black('Obrigado por usar o Gringotts Wizarding Bank!'))
             process.exit()
@@ -188,5 +188,70 @@ function getAccountBalance () {
         operation()
 
     }).catch(err => console.log('Erro na função getAccountBalance:', err))
+
+}
+
+// sacar dinheiro
+
+function witdraw () {
+
+    inquirer.prompt([
+        {
+            name: 'accountName',
+            message: 'Qual o nome da sua conta?'
+        }
+    ]).then((answer) => {
+        const accountName = answer['accountName']
+
+        if(!checkACcount(accountName)) {
+            return witdraw
+        }
+
+        inquirer.prompt([
+            {
+                name: 'amount',
+                message: 'Quanto você deseja sacar?'
+            }
+        ]).then((answer) => {
+
+            const amount = answer['amount']
+
+            removeAmount(accountName, amount)
+
+        }).catch(err => console.log('erro na hora do saque:', err))
+
+    }).catch(err => console.log('Erro na função witdraw: ', err))
+
+}
+
+// funtion de remover dinheiro
+
+function removeAmount (accountName, amount) {
+
+    const accountData = getAccount(accountName)
+
+    if(!amount) {
+        console.log(chalk.bgRed.black('Ocorreu um erro, tente novamente mais tarde!'))
+        return witdraw()
+    }
+
+    if(accountData.balance < amount) {
+        console.log(chalk.bgRed.black('Valor indisponível!'))
+        return witdraw()
+    }
+
+    accountData.balance = parseFloat(accountData.balance) - parseFloat(amount)
+
+    fs.writeFileSync(
+        `accounts/${accountName}.json`, 
+        JSON.stringify(accountData),
+        function (err) {
+            console.log(err => console.log('Erro na hora de saque fs.Json:', err))
+        },
+    )
+
+    console.log(chalk.green(`Foi realizado um saque de R$${amount} da sua conta!`))
+
+    operation()
 
 }
